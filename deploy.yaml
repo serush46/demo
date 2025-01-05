@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: image-gen-app
-          image: inglebard/retroarch-web:latest
+          image: dontrebootme/microbot:v1
           ports:
             - containerPort: 80
 
