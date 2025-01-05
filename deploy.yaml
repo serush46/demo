@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: image-gen-app
-          image: catcafe/thumbnailer:latest
+          image: inglebard/retroarch-web:latest
           ports:
             - containerPort: 80
 
