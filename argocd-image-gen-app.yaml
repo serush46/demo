@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: image-gen-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/youruser/image-gen-app.git' # Replace with your repo URL
+    targetRevision: HEAD
+    path: . # Root path of your manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
