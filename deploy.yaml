@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-gen-app
+  labels:
+    app: image-gen-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-gen-app
+  template:
+    metadata:
+      labels:
+        app: image-gen-app
+    spec:
+      containers:
+        - name: image-gen-app
+          image: catcafe/thumbnailer:latest
+          ports:
+            - containerPort: 80
+
