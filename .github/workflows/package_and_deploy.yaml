@@ -97,16 +97,25 @@ jobs:
             sudo mv argocd-linux-amd64 /usr/local/bin/argocd
 
             # Log in to ArgoCD
-            argocd login 3.233.64.220:30080 \
+            argocd login 13.233.64.220:30080 \
             --username admin \
             --password aAWEbr5FQ1RxBLWP \
             --insecure
 
-            # Set the Helm chart version in the ArgoCD application
+            # Ensure the application is created (first-time deployment)
+            argocd app create helloworld \
+                --repo https://github.com/${{ github.repository }} \
+                --path helm/hello-world \
+                --dest-server https://kubernetes.default.svc \
+                --dest-namespace test \
+                --helm-set chart.version="0.1.${{ github.run_number }}" \
+                --insecure || true
+
+            # Set the Helm chart version (for updates or overrides)
             CHART_VERSION="0.1.${{ github.run_number }}"
             argocd app set helloworld \
-            --helm-set chart.version="$CHART_VERSION" \
-            --refresh --insecure
+                --helm-set chart.version="$CHART_VERSION" \
+                --refresh --insecure
 
             # Sync the application
             argocd app sync helloworld --refresh --insecure
