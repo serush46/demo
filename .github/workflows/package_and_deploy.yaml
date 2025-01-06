@@ -95,7 +95,7 @@ jobs:
             echo '{"name": "Install dependencies", "status": "${{ steps.install_dependencies.outcome }}"},' >> status.json
             echo '{"name": "Run tests", "status": "${{ steps.run_tests.outcome }}"}' >> status.json
             echo ']}' >> status.json
-            id: generate_status
+        id: generate_status
 
       - name: Generate HTML Report for Steps
         run: |
