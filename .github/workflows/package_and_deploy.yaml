@@ -49,22 +49,20 @@ jobs:
             helm package ./helm/hello-world --version "0.1.${{ github.run_number }}"
             ls -1 *.tgz | sed -n 's/\.tgz$//p' > chart_version.txt
     
-      - name: Set Up Local K3s Cluster
+      - name: Set Up Kind Cluster
         run: |
-            curl -sfL https://get.k3s.io | sh -
-            echo "Waiting for K3s to be ready..."
-            for i in {1..30}; do
-              if kubectl get nodes &>/dev/null; then
-                echo "K3s is ready."
-                break
-              fi
-              echo "Waiting for K3s to initialize... ($i/30)"
-              sleep 10
-            done
-            kubectl create namespace test
-            CHART_VERSION=$(cat chart_version.txt)
-            helm install hello-world "./0.1.${{ github.run_number }}.tgz" --namespace test
-
+            curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+            chmod +x ./kind
+            sudo mv ./kind /usr/local/bin/kind
+            kind create cluster --name test-cluster
+            echo "Waiting for Kind to be ready..."
+            kubectl wait --for=condition=Ready nodes --all --timeout=300s
+        
+      - name: Deploy Helm Chart to Kind
+        run: |
+            CHART_VERSION="0.1.${{ github.run_number }}"
+            helm install hello-world "./hello-world-${CHART_VERSION}.tgz" --namespace test --create-namespace
+          
       - name: Create Release Tag
         id: create_tag
         run: |
