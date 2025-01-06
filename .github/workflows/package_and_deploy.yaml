@@ -41,15 +41,13 @@ jobs:
         run: |
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
           helm lint ./helm/hello-world
-          
+
       - name: Validate and Package Helm Chart
         id: package_helm
         run: |
             helm template ./helm/hello-world
-            helm package ./helm/hello-world --version "0.1.${{ runner.os }}-${{ github.run_number }}"
+            helm package ./helm/hello-world --version "0.1.${{ github.run_number }}"
             ls -1 *.tgz | sed -n 's/\.tgz$//p' > chart_version.txt
-            env:
-            GITHUB_RUNNER: ${{ runner.os }}
     
       - name: Set Up Local K3s Cluster
         run: |
@@ -65,7 +63,7 @@ jobs:
             done
             kubectl create namespace test
             CHART_VERSION=$(cat chart_version.txt)
-            helm install hello-world "./${CHART_VERSION}.tgz" --namespace test
+            helm install hello-world "./0.1.${{ github.run_number }}.tgz" --namespace test
 
       - name: Create Release Tag
         id: create_tag
