@@ -1,36 +1,41 @@
 import json
-from jinja2 import Template
+import os
 
 def generate_pipeline_html(status_file, output_file):
+    if not os.path.exists(status_file):
+        print(f"Error: {status_file} does not exist.")
+        return
+
     with open(status_file, 'r') as file:
-        status = json.load(file)
+        data = json.load(file)
 
-    template = Template("""
-    <html>
-        <head>
-            <title>Pipeline Status Report</title>
-        </head>
-        <body>
-            <h1>Pipeline Execution Report</h1>
-            <table border="1">
-                <tr>
-                    <th>Step</th>
-                    <th>Status</th>
-                </tr>
-                {% for step, result in status.items() %}
-                <tr>
-                    <td>{{ step }}</td>
-                    <td>{{ result }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        </body>
-    </html>
-    """)
+    html_content = """<html>
+    <head>
+        <title>Pipeline Status Report</title>
+        <style>
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .success { background-color: #d4edda; }
+            .failure { background-color: #f8d7da; }
+            body { font-family: Arial, sans-serif; margin: 20px; }
+        </style>
+    </head>
+    <body>
+        <h1>Pipeline Status Report</h1>
+        <table>
+            <tr><th>Step Name</th><th>Status</th></tr>
+    """
 
-    html_content = template.render(status=status)
+    for step in data["steps"]:
+        status_class = "success" if step["status"] == "success" else "failure"
+        html_content += f"<tr class='{status_class}'><td>{step['name']}</td><td>{step['status']}</td></tr>"
+
+    html_content += "</table></body></html>"
+
     with open(output_file, 'w') as file:
         file.write(html_content)
 
-if __name__ == "__main__":
-    generate_pipeline_html("status.json", "pipeline_report.html")
+status_file = os.getenv('STATUS_FILE', 'status.json')
+output_file = os.getenv('HTML_REPORT', 'pipeline_report.html')
+generate_pipeline_html(status_file, output_file)

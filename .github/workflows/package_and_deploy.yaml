@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # This will allow the bot to push tags
-  id-token: write  # This can be helpful for accessing additional tokens if needed
+  contents: write
+  id-token: write
 
 jobs:
   build-and-deploy:
@@ -16,19 +16,23 @@ jobs:
 
     steps:
       - name: Checkout Repository
+        id: checkout
         uses: actions/checkout@v3
 
       - name: Pull Nginx Image
+        id: pull_nginx
         run: |
           docker pull nginx:latest
           docker save nginx:latest -o nginx.tar
 
       - name: Scan Nginx Image with Trivy
+        id: scan_trivy
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
           trivy image -f json -o trivy.json nginx:latest
 
       - name: Generate Trivy HTML Report
+        id: generate_trivy_report
         run: |
           python3 scripts/trivy_to_html.py
         env:
@@ -36,24 +40,27 @@ jobs:
           REPORT_HTML: trivy_report.html
 
       - name: Upload Trivy Report
+        id: upload_trivy_report
         uses: actions/upload-artifact@v3
         with:
           name: trivy-report
           path: trivy_report.html
 
       - name: Lint Helm Chart
+        id: lint_helm_chart
         run: |
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
           helm lint ./helm/hello-world
 
       - name: Validate and Package Helm Chart
-        id: package_helm
+        id: validate_package_helm
         run: |
             helm template ./helm/hello-world
             helm package ./helm/hello-world --version "0.1.${{ github.run_number }}"
             ls -1 *.tgz | sed -n 's/\.tgz$//p' > chart_version.txt
     
       - name: Set Up Kind Cluster
+        id: setup_kind
         run: |
             curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
             chmod +x ./kind
@@ -63,41 +70,45 @@ jobs:
             kubectl wait --for=condition=Ready nodes --all --timeout=300s
         
       - name: Deploy Helm Chart to Kind
+        id: deploy_helm_to_kind
         run: |
             CHART_VERSION="0.1.${{ github.run_number }}"
             helm install hello-world "./hello-world-${CHART_VERSION}.tgz" --namespace test --create-namespace
 
       - name: Set up Git config
+        id: setup_git
         run: |
             git config --global user.name "github-actions[bot]"
             git config --global user.email "github-actions[bot]@users.noreply.github.com"
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
       - name: Create Release Tag
+        id: create_release_tag
         run: |
             VERSION="0.1.${{ github.run_number }}"
             git tag -a v$VERSION -m "Release v$VERSION"
             git push origin v$VERSION
-    #   - name: Create Release Tag
-    #     id: create_tag
-    #     run: |
-    #       VERSION=$(date +'%Y%m%d%H%M%S')
-    #       git config --global user.name "github-actions[bot]"
-    #       git config --global user.email "github-actions[bot]@users.noreply.github.com"
-    #       git tag -a v$VERSION -m "Release v$VERSION"
-    #       git push origin v$VERSION
-    #       echo "tag=$VERSION" >> $GITHUB_ENV
 
       - name: Generate status.json
+        if: always()
+        id: generate_status
         run: |
             echo '{"steps": [' > status.json
-            echo '{"name": "Checkout repository", "status": "${{ steps.checkout.outcome }}"},' >> status.json
-            echo '{"name": "Install dependencies", "status": "${{ steps.install_dependencies.outcome }}"},' >> status.json
-            echo '{"name": "Run tests", "status": "${{ steps.run_tests.outcome }}"}' >> status.json
+            echo '{"name": "Checkout Repository", "status": "${{ steps.checkout.outcome }}"},' >> status.json
+            echo '{"name": "Pull Nginx Image", "status": "${{ steps.pull_nginx.outcome }}"},' >> status.json
+            echo '{"name": "Scan Nginx Image with Trivy", "status": "${{ steps.scan_trivy.outcome }}"},' >> status.json
+            echo '{"name": "Generate Trivy HTML Report", "status": "${{ steps.generate_trivy_report.outcome }}"},' >> status.json
+            echo '{"name": "Upload Trivy Report", "status": "${{ steps.upload_trivy_report.outcome }}"},' >> status.json
+            echo '{"name": "Lint Helm Chart", "status": "${{ steps.lint_helm_chart.outcome }}"},' >> status.json
+            echo '{"name": "Validate and Package Helm Chart", "status": "${{ steps.validate_package_helm.outcome }}"},' >> status.json
+            echo '{"name": "Set Up Kind Cluster", "status": "${{ steps.setup_kind.outcome }}"},' >> status.json
+            echo '{"name": "Deploy Helm Chart to Kind", "status": "${{ steps.deploy_helm_to_kind.outcome }}"},' >> status.json
+            echo '{"name": "Set up Git config", "status": "${{ steps.setup_git.outcome }}"},' >> status.json
+            echo '{"name": "Create Release Tag", "status": "${{ steps.create_release_tag.outcome }}"}' >> status.json
             echo ']}' >> status.json
-        id: generate_status
 
       - name: Generate HTML Report for Steps
+        if: always()
         run: |
           python3 scripts/pipeline_to_html.py
         env:
@@ -105,6 +116,7 @@ jobs:
           HTML_REPORT: pipeline_report.html
 
       - name: Upload Pipeline Report
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: pipeline-report
