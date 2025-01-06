@@ -107,18 +107,17 @@ jobs:
                 --repo https://github.com/${{ github.repository }} \
                 --path helm/hello-world \
                 --dest-server https://kubernetes.default.svc \
-                --dest-namespace test \
+                --dest-namespace default \
                 --helm-set chart.version="0.1.${{ github.run_number }}" \
                 --insecure || true
 
             # Set the Helm chart version (for updates or overrides)
             CHART_VERSION="0.1.${{ github.run_number }}"
             argocd app set helloworld \
-                --helm-set chart.version="$CHART_VERSION" \
-                --refresh --insecure
+                --helm-set chart.version="$CHART_VERSION --insecure
 
             # Sync the application
-            argocd app sync helloworld --refresh --insecure
+            argocd app sync helloworld --insecure
     
       - name: Generate status.json
         if: always()
