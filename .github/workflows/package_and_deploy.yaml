@@ -134,7 +134,7 @@ jobs:
             echo '{"name": "Set Up Kind Cluster", "status": "${{ steps.setup_kind.outcome }}"},' >> status.json
             echo '{"name": "Deploy Helm Chart to Kind", "status": "${{ steps.deploy_helm_to_kind.outcome }}"},' >> status.json
             echo '{"name": "Set up Git config", "status": "${{ steps.setup_git.outcome }}"},' >> status.json
-            echo '{"name": "Create Release Tag", "status": "${{ steps.create_release_tag.outcome }}"}' >> status.json
+            echo '{"name": "Create Release Tag", "status": "${{ steps.create_release_tag.outcome }}"},' >> status.json
             echo '{"name": "Sync with ArgoCD", "status": "${{ steps.argocd_sync.outcome }}"}' >> status.json
             echo ']}' >> status.json
 
