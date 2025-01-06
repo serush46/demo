@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write  # This will allow the bot to push tags
+  id-token: write  # This can be helpful for accessing additional tokens if needed
+  
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
