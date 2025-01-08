@@ -63,13 +63,13 @@ jobs:
           BUILD_NUMBER="${{ github.run_number }}"
 
           # Docker tags
-          IMAGE_NAME="your-dockerhub-username/sample-app"
+          IMAGE_NAME="arunmrp90/sample-app"
           TAG_SHA_BUILD="${IMAGE_NAME}:${SHORT_SHA}-${BUILD_NUMBER}"
           TAG_BUILD="${IMAGE_NAME}:${BUILD_NUMBER}"
           TAG_LATEST="${IMAGE_NAME}:latest"
 
           # Build Docker image
-          docker build -t "$TAG_SHA_BUILD" -t "$TAG_BUILD" -t "$TAG_LATEST" .
+          docker build -t "$TAG_SHA_BUILD" -t "$TAG_BUILD" -t "$TAG_LATEST" SampleApp/
 
           # Push images to DockerHub
           echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
