@@ -85,7 +85,7 @@ jobs:
       - name: Trivy Scan
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-          trivy image -f json -o trivy.json your-dockerhub-username/sample-app:latest
+          trivy image -f json -o trivy.json arunmrp90/sample-app:latest
 
       - name: Generate Trivy HTML Report
         run: |
