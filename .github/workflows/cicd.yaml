@@ -19,8 +19,10 @@ jobs:
         with:
           dotnet-version: '6.0.x'
 
-      - name: Restore Dependencies
-        run: dotnet restore SampleApp/src/SampleApp.csproj
+      - name: Restore Dependencies (All Projects)
+        run: |
+            dotnet restore
+            dotnet restore SampleApp/src/SampleApp.csproj
 
       - name: Build Application
         run: dotnet build SampleApp/src/SampleApp.csproj --configuration Release
