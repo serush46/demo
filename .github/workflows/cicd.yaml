@@ -27,11 +27,6 @@ jobs:
             # dotnet restore
             dotnet restore SampleApp/src/SampleApp.csproj
 
-      - name: Install Test SDK
-        run: |
-            dotnet tool install --global Microsoft.NET.Test.Sdk --version 17.6.0
-            export PATH="$PATH:~/.dotnet/tools"
-
       - name: Build Application
         run: dotnet build SampleApp/src/SampleApp.csproj --configuration Release
 
