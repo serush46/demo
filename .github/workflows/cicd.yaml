@@ -5,8 +5,10 @@ on:
     branches:
       - main
   workflow_dispatch:
-  repository_dispatch:
-    types: [trigger-ci]
+  workflow_run:
+    workflows: ["Common Workflow"]
+    types:
+        - completed
 
 jobs:
   build-test-scan:

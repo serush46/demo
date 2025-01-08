@@ -5,8 +5,10 @@ on:
     # branches:
     #   - main
   workflow_dispatch:
-  repository_dispatch:
-    types: [trigger-cd]
+  workflow_run:
+    workflows: ["Common Workflow"]
+    types:
+        - completed
 
 permissions:
   contents: write

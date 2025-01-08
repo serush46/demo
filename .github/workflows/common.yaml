@@ -1,21 +1,12 @@
 # .github/workflows/common.yaml
-name: Common Workflow
+name: Common Workflow - CI-CD
 
 on:
   workflow_dispatch:
 
 jobs:
-  trigger-workflows:
+  trigger:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger CI Workflow
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          event-type: trigger-ci
-
-      - name: Trigger CD Workflow
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          event-type: trigger-cd
+      - name: Start Common Workflow
+        run: echo "Common workflow triggered."
