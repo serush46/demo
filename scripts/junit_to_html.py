@@ -5,6 +5,10 @@ import xml.etree.ElementTree as ET
 input_dir = "target/surefire-reports"
 output_file = "junit-report.html"
 
+if not os.path.exists(input_dir):
+    print(f"[ERROR] Directory not found: {input_dir}")
+    sys.exit(1)
+    
 def convert(xml_path, html_path):
     tree = ET.parse(xml_path)
     root = tree.getroot()

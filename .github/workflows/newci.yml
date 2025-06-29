@@ -47,7 +47,7 @@ jobs:
         with:
           name: junit-report
           path: junit-report.html
-          
+
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
         with:
