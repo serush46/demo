@@ -39,7 +39,7 @@ jobs:
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
         with:
-          args: -Dsonar.projectKey=myapp -Dsonar.host.url=${{ env.SONAR_HOST_URL }} -Dsonar.login=admin -Dsonar.password=admin123
+          args: -Dsonar.projectKey=myapp -Dsonar.host.url=${{ env.SONAR_HOST_URL }} -Dsonar.login=admin -Dsonar.password=admin123 -Dsonar.java.binaries=target
 
       - name: Build Docker Image
         run: |
