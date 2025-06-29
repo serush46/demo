@@ -83,7 +83,7 @@ jobs:
           REPORT_HTML: trivy_report.html
 
       - name: Upload Trivy Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: trivy-report
           path: trivy_report.html
