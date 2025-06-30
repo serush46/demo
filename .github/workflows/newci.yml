@@ -33,28 +33,24 @@ jobs:
       - name: Build with Maven
         run: mvn clean package
 
-      - name: Unit Tests
-        run: mvn test
+      - name: Run Unit Tests with JUnit
+        run: mvn -B test --file pom.xml
 
-      # - name: Generate JUnit XML Report
-      #   run: |
-      #     mvn test -Dsurefire.reportFormat=xml
-      #     ls -ltrh
-      #     ls -ltrh target/*
-
-      # - name: Convert JUnit XML to HTML
-      #   run: python3 scripts/junit_to_html.py
-
-      # - name: Upload JUnit HTML Report
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: junit-report
-      #     path: junit-report.html
+      - name: Publish JUnit Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-test-results
+          path: target/surefire-reports/
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
         with:
-          args: -Dsonar.projectKey=myapp -Dsonar.host.url=${{ env.SONAR_HOST_URL }} -Dsonar.login=admin -Dsonar.password=admin123 -Dsonar.java.binaries=target
+          args: >
+            -Dsonar.projectKey=myapp
+            -Dsonar.host.url=${{ env.SONAR_HOST_URL }}
+            -Dsonar.login=admin
+            -Dsonar.password=admin123
+            -Dsonar.java.binaries=target
 
       - name: Build Docker Image
         run: |
