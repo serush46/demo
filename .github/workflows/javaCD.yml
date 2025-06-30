@@ -1,6 +1,7 @@
 name: Java CD Pipeline
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Java CI Pipeline"]
     types:
