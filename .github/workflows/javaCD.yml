@@ -109,7 +109,7 @@ jobs:
             # Log in to ArgoCD
             argocd login 65.2.175.244:8443 \
             --username admin \
-            --password Ym5Wc2RrSnNNRGx4YkVwcmJrNWxTZz09 \
+            --password nulvBl09qlJknNeJ \
             --insecure
 
             # Ensure the application is created (first-time deployment)
