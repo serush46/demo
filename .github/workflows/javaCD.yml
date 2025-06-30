@@ -44,19 +44,11 @@ jobs:
 
       - name: Static Code Analysis with Checkov
         id: checkov_scan
-        run: |
-          # Install Checkov
-          echo "Downloading Checkov..."
-          curl -sSL https://github.com/bridgecrewio/checkov/releases/download/v2.0.0/checkov_2.0.0_linux_amd64.tar.gz -o checkov.tar.gz
-          if [ $? -eq 0 ]; then
-            tar -xzvf checkov.tar.gz -C /usr/local/bin
-          else
-            echo "Error downloading Checkov"
-            exit 1
-          fi
-          # Run Checkov for Helm chart static analysis
-          checkov -d ./demo-app -o json > checkov_report.json || true  # The 'true' ensures the pipeline continues even if Checkov finds issues.
-
+        uses: bridgecrewio/checkov-action@v2.0.0
+        with:
+          directory: ./demo-app    # Specify the path to the Helm chart directory
+          output: json             # You can change this to 'junit' or other formats as needed
+          
       - name: Upload Checkov Report
         id: upload_checkov_report
         run: |
