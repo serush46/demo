@@ -49,6 +49,13 @@
             <version>5.7.0</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Spring Boot Test for MockMvc -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
