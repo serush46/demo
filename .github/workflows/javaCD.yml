@@ -1,0 +1,163 @@
+name: Java CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["Java CI Pipeline"]
+    types:
+        - completed
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Pull Docker Image
+        id: pull_docker_image
+        run: |
+          # Pull the Docker image from the previous CI build
+          docker pull ${{ needs.ci.outputs.docker_tag }}
+
+      - name: Create Helm Chart
+        id: create_helm_chart
+        run: |
+          helm create demo-app || echo "Chart already exists"
+          
+          # Update Helm chart with the docker tag (passed from CI)
+          sed -i "s#image: \"nginx\"#image: \"${{ needs.ci.outputs.docker_tag }}\"#" demo-app/values.yaml
+
+      - name: Validate and Package Helm Chart
+        id: validate_package_helm
+        run: |
+            helm template ./demo-app
+            helm lint ./demo-app  # Helm linting to ensure proper chart structure
+            helm package ./demo-app --version "0.1.${{ github.run_number }}"
+            ls -1 *.tgz | sed -n 's/\.tgz$//p' > chart_version.txt
+
+      - name: Static Code Analysis with Checkov
+        id: checkov_scan
+        run: |
+          # Install Checkov
+          curl -sSL https://github.com/bridgecrewio/checkov/releases/download/v2.0.0/checkov_2.0.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin
+          
+          # Run Checkov for Helm chart static analysis
+          checkov -d ./demo-app -o json > checkov_report.json || true  # The 'true' ensures the pipeline continues even if Checkov finds issues.
+
+      - name: Upload Checkov Report
+        id: upload_checkov_report
+        run: |
+          # Upload Checkov report as an artifact
+          mv checkov_report.json $GITHUB_ENV
+
+      - name: Scan Helm Chart for Security Vulnerabilities with Trivy
+        id: trivy_scan
+        run: |
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+            trivy fs --security-checks vuln ./demo-app/ # Scanning the Helm chart directory for security vulnerabilities
+
+      - name: Set Up Kind Cluster
+        id: setup_kind
+        run: |
+            curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+            chmod +x ./kind
+            sudo mv ./kind /usr/local/bin/kind
+            kind create cluster --name test-cluster
+            echo "Waiting for Kind to be ready..."
+            kubectl wait --for=condition=Ready nodes --all --timeout=300s
+
+      - name: Deploy Helm Chart to Kind
+        id: deploy_helm_to_kind
+        run: |
+            CHART_VERSION="0.1.${{ github.run_number }}"
+            helm install demo-app ./demo-app-${CHART_VERSION}.tgz --namespace test --create-namespace
+
+      - name: Push Helm Chart to ChartMuseum
+        id: push_chart
+        run: |
+            helm package ./demo-app
+            curl --data-binary "@demo-app-0.1.${{ github.run_number }}.tgz" http://65.2.175.244:8080/api/charts
+
+      - name: Set up Git config
+        id: setup_git
+        run: |
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+      - name: Create Release Tag
+        id: create_release_tag
+        run: |
+            VERSION="0.1.${{ github.run_number }}"
+            git tag -a v$VERSION -m "Release v$VERSION"
+            git push origin v$VERSION
+
+      - name: Sync with ArgoCD
+        id: argocd_sync
+        run: |
+            curl -LO https://github.com/argoproj/argo-cd/releases/download/v2.7.0/argocd-linux-amd64
+            chmod +x argocd-linux-amd64
+            sudo mv argocd-linux-amd64 /usr/local/bin/argocd
+
+            # Log in to ArgoCD
+            argocd login 65.2.175.244:8443 \
+            --username admin \
+            --password Ym5Wc2RrSnNNRGx4YkVwcmJrNWxTZz09 \
+            --insecure
+
+            # Ensure the application is created (first-time deployment)
+            argocd app create demo-app \
+                --repo https://github.com/${{ github.repository }} \
+                --path helm/demo-app \
+                --dest-server https://kubernetes.default.svc \
+                --dest-namespace default \
+                --helm-set chart.version="0.1.${{ github.run_number }}" \
+                --insecure || true
+
+            # Set the Helm chart version (for updates or overrides)
+            CHART_VERSION="0.1.${{ github.run_number }}"
+            argocd app set demo-app \
+                --helm-set chart.version="$CHART_VERSION" --insecure
+
+            # Sync the application
+            argocd app sync demo-app --insecure
+
+      - name: Generate status.json
+        if: always()
+        id: generate_status
+        run: |
+            echo '{"steps": [' > status.json
+            echo '{"name": "Checkout Repository", "status": "${{ steps.checkout.outcome }}"},' >> status.json
+            echo '{"name": "Pull Docker Image", "status": "${{ steps.pull_docker_image.outcome }}"},' >> status.json
+            echo '{"name": "Create Helm Chart", "status": "${{ steps.create_helm_chart.outcome }}"},' >> status.json
+            echo '{"name": "Validate and Package Helm Chart", "status": "${{ steps.validate_package_helm.outcome }}"},' >> status.json
+            echo '{"name": "Static Code Analysis with Checkov", "status": "${{ steps.checkov_scan.outcome }}"},' >> status.json
+            echo '{"name": "Push Helm Chart to ChartMuseum", "status": "${{ steps.push_chart.outcome }}"},' >> status.json
+            echo '{"name": "Scan Helm Chart with Trivy", "status": "${{ steps.trivy_scan.outcome }}"},' >> status.json
+            echo '{"name": "Set Up Kind Cluster", "status": "${{ steps.setup_kind.outcome }}"},' >> status.json
+            echo '{"name": "Deploy Helm Chart to Kind", "status": "${{ steps.deploy_helm_to_kind.outcome }}"},' >> status.json
+            echo '{"name": "Set up Git config", "status": "${{ steps.setup_git.outcome }}"},' >> status.json
+            echo '{"name": "Create Release Tag", "status": "${{ steps.create_release_tag.outcome }}"},' >> status.json
+            echo '{"name": "Sync with ArgoCD", "status": "${{ steps.argocd_sync.outcome }}"}' >> status.json
+            echo ']}' >> status.json
+
+      - name: Generate HTML Report for Steps
+        if: always()
+        run: |
+          python3 scripts/pipeline_to_html.py
+        env:
+          STATUS_FILE: status.json
+          HTML_REPORT: pipeline_report.html
+
+      - name: Upload Pipeline Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: pipeline-report
+          path: pipeline_report.html

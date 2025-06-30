@@ -1,4 +1,4 @@
-name: Java CI/CD Pipeline
+name: Java CI Pipeline
 
 on:
   push:
@@ -19,6 +19,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      docker_tag: ${{ steps.build_and_push_docker.outputs.docker_tag }}  # Passing the docker_tag to the next job
 
     steps:
       - name: Checkout
@@ -53,6 +55,7 @@ jobs:
             -Dsonar.java.binaries=target
 
       - name: Build Docker Image
+        id: build_and_push_docker
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           docker build -t $IMAGE_NAME:$VERSION .
