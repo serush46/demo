@@ -115,7 +115,7 @@ jobs:
             # Ensure the application is created (first-time deployment)
             argocd app create demo-app \
                 --repo https://github.com/${{ github.repository }} \
-                --path helm/demo-app \
+                --path demo-app \
                 --dest-server https://kubernetes.default.svc \
                 --dest-namespace default \
                 --helm-set chart.version="0.1.${{ github.run_number }}" \
