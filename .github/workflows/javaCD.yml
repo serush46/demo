@@ -44,7 +44,7 @@ jobs:
 
       - name: Static Code Analysis with Checkov
         id: checkov_scan
-        uses: bridgecrewio/checkov-action@v2.0.0
+        uses: bridgecrewio/checkov-action@master
         with:
           directory: ./demo-app    # Specify the path to the Helm chart directory
           output: json             # You can change this to 'junit' or other formats as needed
