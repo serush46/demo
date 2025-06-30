@@ -23,7 +23,7 @@ jobs:
         id: pull_docker_image
         run: |
           # Pull the Docker image from the previous CI build
-          docker pull ${{ needs.ci.outputs.docker_tag }}
+          docker pull arunmrp90/demo-app:${{ needs.ci.outputs.docker_tag }}
 
       - name: Create Helm Chart
         id: create_helm_chart
