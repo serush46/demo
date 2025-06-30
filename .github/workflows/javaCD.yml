@@ -24,7 +24,7 @@ jobs:
         id: pull_docker_image
         run: |
           # Pull the Docker image from the previous CI build
-          docker pull arunmrp90/demo-app:${{ needs.ci.outputs.docker_tag }}
+          docker pull arunmrp90/demo-app:latest
 
       - name: Create Helm Chart
         id: create_helm_chart
@@ -32,7 +32,7 @@ jobs:
           helm create demo-app || echo "Chart already exists"
           
           # Update Helm chart with the docker tag (passed from CI)
-          sed -i "s#image: \"nginx\"#image: \"${{ needs.ci.outputs.docker_tag }}\"#" demo-app/values.yaml
+          sed -i "s#image: \"nginx\"#image: \"lastest\"#" demo-app/values.yaml
 
       - name: Validate and Package Helm Chart
         id: validate_package_helm
