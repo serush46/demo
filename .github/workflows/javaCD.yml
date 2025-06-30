@@ -111,7 +111,9 @@ jobs:
             --username admin \
             --password nulvBl09qlJknNeJ \
             --insecure
-
+            
+            ls -lrhta
+            
             # Ensure the application is created (first-time deployment)
             argocd app create demo-app \
                 --repo https://github.com/${{ github.repository }} \
