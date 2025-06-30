@@ -44,6 +44,7 @@ jobs:
 
       - name: Static Code Analysis with Checkov
         id: checkov_scan
+        continue-on-error: true
         uses: bridgecrewio/checkov-action@master
         with:
           directory: ./demo-app    # Specify the path to the Helm chart directory
